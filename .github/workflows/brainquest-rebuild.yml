@@ -1,0 +1,42 @@
+name: Brain Quest New Godot Rebuild
+on:
+  push:
+    branches: [brainquest-rebuild]
+    paths:
+      - 'godot-rebuild/**'
+      - '.github/workflows/brainquest-rebuild.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install web export templates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ca-certificates curl unzip
+          mkdir -p /github/home/.local/share/godot/export_templates/4.3.stable
+          curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -o /tmp/templates.tpz
+          unzip -oq /tmp/templates.tpz 'templates/web_nothreads_*' -d /tmp/godot-templates
+          cp /tmp/godot-templates/templates/web_nothreads_* /github/home/.local/share/godot/export_templates/4.3.stable/
+      - name: Import new game
+        run: godot --headless --path godot-rebuild --editor --quit
+      - name: Export new web game
+        run: |
+          mkdir -p godot-rebuild/build/web
+          godot --headless --path godot-rebuild --export-release Web build/web/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brainquest-rebuild-web
+          path: godot-rebuild/build/web/
+      - name: Publish new game separately
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: brainquest-rebuild-pages
+          publish_dir: ./godot-rebuild/build/web
+          force_orphan: true
