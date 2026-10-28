@@ -81,10 +81,21 @@ func _setup_world() -> void:
 	_box(hero,Vector3(-0.18,1.08,-0.31),Vector3(0.12,0.14,0.05),Color("#00eaff"),true)
 	_box(hero,Vector3(0.18,1.08,-0.31),Vector3(0.12,0.14,0.05),Color("#00eaff"),true)
 	camera = Camera3D.new()
-	camera.position = Vector3(10,14,17)
-	camera.look_at(Vector3(0,0,0))
-	camera.current = true
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.position = Vector3(12, 19, 18)
 	add_child(camera)
+	camera.look_at(Vector3(0,0,0), Vector3.UP)
+	camera.current = true
+	get_viewport().size_changed.connect(_fit_camera)
+	_fit_camera()
+
+func _fit_camera() -> void:
+	if camera == null:
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var aspect := viewport_size.x / maxf(viewport_size.y, 1.0)
+	camera.size = maxf(17.0, 14.0 / maxf(aspect, 0.35))
+	camera.look_at(Vector3(0, 0, 0), Vector3.UP)
 
 func _setup_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -99,8 +110,8 @@ func _setup_ui() -> void:
 	top.offset_top = 16
 	ui.add_child(top)
 	var heading := Label.new()
-	heading.text = "✦ BRAIN QUEST 3D  /  LOST TEMPLE"
-	heading.add_theme_font_size_override("font_size",24)
+	heading.text = "BRAIN QUEST 3D / LOST TEMPLE"
+	heading.add_theme_font_size_override("font_size", 22)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	top.add_child(heading)
 	stats_label = Label.new()
@@ -112,22 +123,25 @@ func _setup_ui() -> void:
 	var controls := GridContainer.new()
 	controls.columns = 3
 	controls.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	controls.offset_left = -115
-	controls.offset_right = 115
-	controls.offset_top = -185
-	controls.offset_bottom = -12
+	controls.offset_left = -126
+	controls.offset_right = 126
+	controls.offset_top = -242
+	controls.offset_bottom = -18
 	ui.add_child(controls)
-	for entry in ["","▲","","◀","↻","▶","","▼",""]:
+	for entry in ["","UP","","LEFT","RESET","RIGHT","","DOWN",""]:
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(72,54)
+		button.custom_minimum_size = Vector2(82,68)
 		button.text = entry
 		controls.add_child(button)
+		button.add_theme_font_size_override("font_size", 15)
+		if entry == "":
+			button.visible = false
 		match entry:
-			"▲": button.pressed.connect(func(): _move(Vector2i(0,-1)))
-			"▼": button.pressed.connect(func(): _move(Vector2i(0,1)))
-			"◀": button.pressed.connect(func(): _move(Vector2i(-1,0)))
-			"▶": button.pressed.connect(func(): _move(Vector2i(1,0)))
-			"↻": button.pressed.connect(_reset)
+			"UP": button.pressed.connect(func(): _move(Vector2i(0,-1)))
+			"DOWN": button.pressed.connect(func(): _move(Vector2i(0,1)))
+			"LEFT": button.pressed.connect(func(): _move(Vector2i(-1,0)))
+			"RIGHT": button.pressed.connect(func(): _move(Vector2i(1,0)))
+			"RESET": button.pressed.connect(_reset)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_up"): _move(Vector2i(0,-1))
