@@ -6,6 +6,9 @@ on:
       - 'godot-rebuild/**'
       - '.github/workflows/brainquest-rebuild.yml'
   workflow_dispatch:
+concurrency:
+  group: brainquest-rebuild-pages-publish
+  cancel-in-progress: false
 permissions:
   contents: write
 jobs:
@@ -40,3 +43,4 @@ jobs:
           publish_branch: brainquest-rebuild-pages
           publish_dir: ./godot-rebuild/build/web
           force_orphan: true
+          enable_jekyll: false
