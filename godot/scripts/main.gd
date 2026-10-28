@@ -235,9 +235,12 @@ func _update_ui() -> void:
 		_set_status("Find the key, activate the switch, reach the portal!" if not language_ar else "اجمع المفتاح وفعّل الزر وادخل البوابة!")
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not event.pressed or event.echo:
+	if not event is InputEventKey:
 		return
-	match event.keycode:
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	match key_event.keycode:
 		KEY_UP, KEY_W: _move(0, -1)
 		KEY_DOWN, KEY_S: _move(0, 1)
 		KEY_LEFT, KEY_A: _move(-1, 0)
