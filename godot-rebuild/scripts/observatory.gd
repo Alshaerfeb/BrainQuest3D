@@ -20,6 +20,9 @@ var weight_ready := false
 var solved := false
 var time := 0.0
 var last_input := Vector2.ZERO
+var light_segments: Array[MeshInstance3D] = []
+var weight: MeshInstance3D
+var gate_panel: MeshInstance3D
 
 func _ready() -> void:
  _world()
@@ -109,14 +112,14 @@ func _world() -> void:
  _cylinder(mirror_b,Vector3.ZERO,0.65,0.8,STONE)
  _cube(mirror_b,Vector3(0,0.8,0),Vector3(1.5,1.2,0.15),AQUA)
  _cylinder(self,Vector3(-3,0.18,3.3),0.9,0.25,Color("#b15e80"),true)
- _cube(self,Vector3(-5.0,0.45,4.0),Vector3(1.0,0.9,1.0),Color("#bd9462"))
+ weight = _cube(self,Vector3(-5.0,0.45,4.0),Vector3(1.0,0.9,1.0),Color("#bd9462"))
  gate = Node3D.new()
  gate.position = Vector3(0,0,-7.2)
  add_child(gate)
  _cube(gate,Vector3(-1.4,1.8,0),Vector3(0.6,3.8,0.9),STONE)
  _cube(gate,Vector3(1.4,1.8,0),Vector3(0.6,3.8,0.9),STONE)
  _cube(gate,Vector3(0,3.7,0),Vector3(3.5,0.6,1.0),GOLD)
- _cube(gate,Vector3(0,1.65,0),Vector3(2.3,3.1,0.35),Color("#31656c"))
+ gate_panel = _cube(gate,Vector3(0,1.65,0),Vector3(2.3,3.1,0.35),Color("#31656c"))
  hero = Node3D.new()
  hero.position = destination
  add_child(hero)
@@ -229,6 +232,9 @@ func _turn_mirror() -> void:
  if dial_steps != 2:
   objective.text = "Align the golden dial first (two turns)."
   return
+ if hero.position.distance_to(mirror_a.position) > 6.0:
+  objective.text = "Move Pip near the first mirror."
+  return
  mirror_steps += 1
  mirror_a.rotation.y = float(mirror_steps)*PI/4.0
  mirror_b.rotation.y = float(mirror_steps)*PI/3.0
@@ -244,13 +250,14 @@ func _place_weight() -> void:
   return
  weight_ready = true
  solved = true
+ weight.position = Vector3(-3,0.6,3.3)
  _update_state()
 
 func _update_state() -> void:
  progress.text = "DIAL %s   •   LIGHT %s   •   GATE %s" % ["✓" if dial_steps==2 else "○","✓" if bridge_ready else "○","✓" if weight_ready else "○"]
  if solved:
   objective.text = "OBSERVATORY CLEARED! ✦ YOU RESTORED THE LIGHT ✦"
-  gate.visible = false
+  gate_panel.position.y = 5.2
  elif dial_steps != 2:
   objective.text = "Puzzle 1: Rotate the golden dial until the runes align."
  elif not bridge_ready:
@@ -268,7 +275,8 @@ func _reset() -> void:
  dial.rotation.y = 0
  mirror_a.rotation.y = 0
  mirror_b.rotation.y = 0
- gate.visible = true
+ gate_panel.position.y = 1.65
+ weight.position = Vector3(-5,0.45,4)
  _update_state()
 
 func _process(delta: float) -> void:
