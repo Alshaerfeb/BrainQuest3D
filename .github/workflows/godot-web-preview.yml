@@ -4,7 +4,7 @@ on:
     branches: [godot-3d-prototype]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -35,3 +35,10 @@ jobs:
         with:
           name: brainquest-godot-web-preview
           path: build/web/
+      - name: Publish isolated preview branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: godot-preview-pages
+          publish_dir: ./build/web
+          force_orphan: true
