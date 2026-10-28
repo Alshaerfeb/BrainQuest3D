@@ -1,0 +1,9 @@
+{
+  "name": "Brain Quest 3D",
+  "short_name": "BrainQuest",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#080d20",
+  "theme_color": "#080d20",
+  "description": "Bilingual brain puzzle arcade"
+}
