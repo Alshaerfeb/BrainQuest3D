@@ -1,0 +1,25 @@
+name: Build Godot Web Preview
+on:
+  push:
+    branches: [godot-3d-prototype]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Godot resources
+        run: godot --headless --path . --editor --quit
+      - name: Export web preview
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+      - name: Upload playable preview files
+        uses: actions/upload-artifact@v4
+        with:
+          name: brainquest-godot-web-preview
+          path: build/web/
