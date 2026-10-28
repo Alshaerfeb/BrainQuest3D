@@ -22,6 +22,9 @@ var heading: Label
 var move_label: Label
 var language_ar := false
 var busy := false
+var door_meshes: Array[MeshInstance3D] = []
+var key_meshes: Array[MeshInstance3D] = []
+var switch_meshes: Array[MeshInstance3D] = []
 
 func _ready() -> void:
 	_build_lights()
@@ -94,6 +97,9 @@ func _load_level() -> void:
 	has_key = false
 	switch_on = false
 	moves = 0
+	door_meshes.clear()
+	key_meshes.clear()
+	switch_meshes.clear()
 	for y in range(map_data.size()):
 		for x in range(map_data[y].length()):
 			var cell := Vector2i(x, y)
@@ -108,11 +114,11 @@ func _load_level() -> void:
 					pos = cell
 					start_pos = cell
 				"K":
-					_sphere(p + Vector3(0, 0.55, 0), 0.38, Color("#ffd36a"), true)
+					key_meshes.append(_sphere(p + Vector3(0, 0.55, 0), 0.38, Color("#ffd36a"), true))
 				"P":
-					_cube(p + Vector3(0, 0.12, 0), Vector3(1.3, 0.16, 1.3), Color("#4be0d1"), true)
+					switch_meshes.append(_cube(p + Vector3(0, 0.12, 0), Vector3(1.3, 0.16, 1.3), Color("#4be0d1"), true))
 				"D":
-					_cube(p + Vector3(0, 0.8, 0), Vector3(1.5, 1.6, 0.3), Color("#e46c91"), true)
+					door_meshes.append(_cube(p + Vector3(0, 0.8, 0), Vector3(1.5, 1.6, 0.3), Color("#e46c91"), true))
 				"G":
 					_sphere(p + Vector3(0, 0.8, 0), 0.7, Color("#a97aff"), true)
 	player = _sphere(_point(pos) + Vector3(0, 0.65, 0), 0.58, Color("#69e7ff"), true)
@@ -149,10 +155,14 @@ func _move(dx: int, dy: int) -> void:
 	match tile:
 		"K":
 			has_key = true
+			for item in key_meshes:
+				item.visible = false
+			_update_doors()
 			_replace_tile(pos, ".")
 			_set_status("Key collected!" if not language_ar else "حصلت على المفتاح!")
 		"P":
 			switch_on = true
+			_update_doors()
 			_set_status("Switch activated! Door unlocked if you have the key." if not language_ar else "تم تفعيل المفتاح الأرضي!")
 		"G":
 			if has_key and switch_on:
@@ -165,14 +175,30 @@ func _move(dx: int, dy: int) -> void:
 				_set_status("Portal needs key + switch!" if not language_ar else "البوابة تحتاج المفتاح وتفعيل الزر!")
 	_update_ui()
 
+func _update_doors() -> void:
+	if has_key and switch_on:
+		for door in door_meshes:
+			var tween := create_tween()
+			tween.tween_property(door, "scale", Vector3(1, 0.02, 1), 0.4)
+
 func _set_status(message: String) -> void:
 	status.text = message
 
 func _make_button(text_value: String, action: Callable, parent: Control, minimum := Vector2(94, 76)) -> Button:
 	var button := Button.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#24385d")
+	style.border_color = Color("#61d8e8")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	button.add_theme_stylebox_override("normal", style)
+	var pressed_style := style.duplicate()
+	pressed_style.bg_color = Color("#347c96")
+	button.add_theme_stylebox_override("pressed", pressed_style)
+	button.add_theme_color_override("font_color", Color("#f5faff"))
 	button.text = text_value
 	button.custom_minimum_size = minimum
-	button.add_theme_font_size_override("font_size", 27)
+	button.add_theme_font_size_override("font_size", 21)
 	parent.add_child(button)
 	button.pressed.connect(action)
 	return button
@@ -191,11 +217,11 @@ func _build_ui() -> void:
 	root.add_child(top)
 	heading = Label.new()
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override("font_size", 38)
+	heading.add_theme_font_size_override("font_size", 32)
 	top.add_child(heading)
 	move_label = Label.new()
 	move_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	move_label.add_theme_font_size_override("font_size", 23)
+	move_label.add_theme_font_size_override("font_size", 19)
 	top.add_child(move_label)
 	status = Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -214,23 +240,23 @@ func _build_ui() -> void:
 	var up := HBoxContainer.new()
 	up.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.add_child(up)
-	_make_button("↑", func(): _move(0, -1), up)
+	_make_button("UP", func(): _move(0, -1), up)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.add_child(row)
-	_make_button("←", func(): _move(-1, 0), row)
-	_make_button("↓", func(): _move(0, 1), row)
-	_make_button("→", func(): _move(1, 0), row)
+	_make_button("LEFT", func(): _move(-1, 0), row)
+	_make_button("DOWN", func(): _move(0, 1), row)
+	_make_button("RIGHT", func(): _move(1, 0), row)
 	var tools := HBoxContainer.new()
 	tools.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.add_child(tools)
-	_make_button("↻", func(): _load_level(), tools, Vector2(85, 55))
-	_make_button("AR / EN", func(): language_ar = not language_ar; _update_ui(), tools, Vector2(140, 55))
+	_make_button("RESET", func(): _load_level(), tools, Vector2(85, 55))
+	_make_button("EN", func(): language_ar = false; _set_status("Arabic font support is being prepared."), tools, Vector2(140, 55))
 	_make_button("?", func(): _set_status("Collect gold key, step on cyan switch, reach purple portal." if not language_ar else "اجمع المفتاح الذهبي ثم فعّل الزر السماوي وادخل البوابة."), tools, Vector2(85, 55))
 
 func _update_ui() -> void:
 	heading.text = ("المهمة " if language_ar else "BRAIN QUEST 3D  •  LEVEL ") + str(level + 1)
-	move_label.text = ("الخطوات: " if language_ar else "Moves: ") + str(moves) + ("  |  مفتاح: " if language_ar else "  |  Key: ") + ("✓" if has_key else "—") + ("  |  زر: " if language_ar else "  |  Switch: ") + ("✓" if switch_on else "—")
+	move_label.text = ("الخطوات: " if language_ar else "Moves: ") + str(moves) + ("  |  مفتاح: " if language_ar else "  |  Key: ") + ("YES" if has_key else "NO") + ("  |  زر: " if language_ar else "  |  Switch: ") + ("YES" if switch_on else "NO")
 	if status.text.is_empty():
 		_set_status("Find the key, activate the switch, reach the portal!" if not language_ar else "اجمع المفتاح وفعّل الزر وادخل البوابة!")
 
