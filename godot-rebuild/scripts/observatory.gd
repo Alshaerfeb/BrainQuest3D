@@ -72,6 +72,7 @@ func _world() -> void:
  sun.rotation_degrees = Vector3(-54,-35,0)
  sun.light_energy = 1.35
  add_child(sun)
+ _add_nature_assets()
  _cylinder(self,Vector3(0,-1.0,0),10.0,1.7,Color("#3a3e54"))
  _cylinder(self,Vector3(0,-0.12,0),8.8,0.4,STONE)
  for i in range(16):
@@ -134,6 +135,23 @@ func _world() -> void:
  cam.current = true
  get_viewport().size_changed.connect(_fit_camera)
  _fit_camera()
+
+func _add_nature_assets() -> void:
+ var names := ["tree_oak", "tree_pine", "rock_large"]
+ for i in range(12):
+  var path := "res://assets/nature/%s.glb" % names[i % names.size()]
+  if not ResourceLoader.exists(path):
+   continue
+  var scene := load(path) as PackedScene
+  if scene == null:
+   continue
+  var instance := scene.instantiate() as Node3D
+  if instance == null:
+   continue
+  var a := TAU * float(i) / 12.0
+  instance.position = Vector3(cos(a)*12.8,-0.2,sin(a)*12.8)
+  instance.scale = Vector3.ONE * (1.4 if i % 3 != 2 else 1.8)
+  add_child(instance)
 
 func _fit_camera() -> void:
  if cam == null:
