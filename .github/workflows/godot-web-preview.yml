@@ -12,6 +12,23 @@ jobs:
       image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v4
+      - name: Install Godot 4.3 export templates
+        run: |
+          set -eu
+          mkdir -p /github/home/.local/share/godot/export_templates/4.3.stable
+          python3 - <<'PY'
+          import urllib.request, zipfile, io, os
+          url = "https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz"
+          data = urllib.request.urlopen(url, timeout=120).read()
+          target = "/github/home/.local/share/godot/export_templates/4.3.stable"
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+              for name in z.namelist():
+                  if name.startswith("templates/web_nothreads_") and name.endswith(".zip"):
+                      with open(os.path.join(target, os.path.basename(name)), "wb") as f:
+                          f.write(z.read(name))
+          for name in ("web_nothreads_debug.zip", "web_nothreads_release.zip"):
+              assert os.path.isfile(os.path.join(target,name)), "Missing "+name
+          PY
       - name: Import Godot resources
         run: godot --headless --path . --editor --quit
       - name: Export web preview
