@@ -23,12 +23,6 @@ jobs:
           curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -o /tmp/templates.tpz
           unzip -oq /tmp/templates.tpz 'templates/web_nothreads_*' -d /tmp/godot-templates
           cp /tmp/godot-templates/templates/web_nothreads_* /github/home/.local/share/godot/export_templates/4.3.stable/
-      - name: Fetch licensed CC0 nature models
-        run: |
-          mkdir -p godot-rebuild/assets/nature
-          for model in tree_oak tree_pine rock_large; do
-            curl -fL --retry 2 "https://raw.githubusercontent.com/syuhei176/ai-game-assets/v1/models/environment/${model}.glb" -o "godot-rebuild/assets/nature/${model}.glb" || rm -f "godot-rebuild/assets/nature/${model}.glb"
-          done
       - name: Import new game
         run: godot --headless --path godot-rebuild --editor --quit
       - name: Export new web game
