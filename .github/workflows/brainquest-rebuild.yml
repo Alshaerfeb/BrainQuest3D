@@ -26,6 +26,30 @@ jobs:
           curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -o /tmp/templates.tpz
           unzip -oq /tmp/templates.tpz 'templates/web_nothreads_*' -d /tmp/godot-templates
           cp /tmp/godot-templates/templates/web_nothreads_* /github/home/.local/share/godot/export_templates/4.3.stable/
+      - name: Fetch CC0 environment assets (non-blocking)
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p godot-rebuild/assets/nature
+          url="https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip"
+          if curl -fL --retry 2 --connect-timeout 12 --max-time 100 "$url" -o /tmp/nature-kit.zip && unzip -tq /tmp/nature-kit.zip >/dev/null; then
+            python3 - <<'PY'
+          import zipfile, pathlib
+          archive=zipfile.ZipFile('/tmp/nature-kit.zip')
+          names=archive.namelist()
+          targets={'tree_oak':'tree_oak.glb','tree_pine':'tree_pine.glb','rock_large':'rock_largeA.glb'}
+          out=pathlib.Path('godot-rebuild/assets/nature')
+          for dest,basename in targets.items():
+              candidates=[n for n in names if n.lower().endswith('/'+basename.lower())]
+              if candidates:
+                  (out/(dest+'.glb')).write_bytes(archive.read(candidates[0]))
+                  print('Imported',dest, 'from',candidates[0])
+              else:
+                  print('Unavailable asset:',basename)
+          PY
+          else
+            echo "::warning::Nature Kit archive unavailable; build continues without external models."
+          fi
       - name: Import new game
         run: godot --headless --path godot-rebuild --editor --quit
       - name: Export new web game
