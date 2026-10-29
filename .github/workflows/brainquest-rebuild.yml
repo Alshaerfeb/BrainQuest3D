@@ -26,16 +26,6 @@ jobs:
           curl -fL --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -o /tmp/templates.tpz
           unzip -oq /tmp/templates.tpz 'templates/web_nothreads_*' -d /tmp/godot-templates
           cp /tmp/godot-templates/templates/web_nothreads_* /github/home/.local/share/godot/export_templates/4.3.stable/
-      - name: Import verified Kenney Nature Kit 2.1 models
-        run: |
-          set -eu
-          curl -fL --retry 3 'https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip' -o /tmp/kenney_nature-kit.zip
-          echo 'fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d  /tmp/kenney_nature-kit.zip' | sha256sum -c -
-          mkdir -p godot-rebuild/assets/nature
-          unzip -p /tmp/kenney_nature-kit.zip 'Models/GLTF format/rock_largeA.glb' > godot-rebuild/assets/nature/rock_large.glb
-          unzip -p /tmp/kenney_nature-kit.zip 'Models/GLTF format/tree_oak.glb' > godot-rebuild/assets/nature/tree_oak.glb
-          unzip -p /tmp/kenney_nature-kit.zip 'Models/GLTF format/tree_pine.glb' > godot-rebuild/assets/nature/tree_pine.glb
-          test -s godot-rebuild/assets/nature/rock_large.glb
       - name: Import new game
         run: godot --headless --path godot-rebuild --editor --quit
       - name: Export new web game
